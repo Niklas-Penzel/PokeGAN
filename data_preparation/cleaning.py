@@ -5,7 +5,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 
-def clean_data(in_path="dirty_pkm", out_path="clean_pkm"):
+def clean_data(in_path=os.path.join("..","dirty_pkm"), out_path=os.path.join("..","clean_pkm")):
     if not os.path.isdir(in_path):
         print("WRONG PATH!")
         return 

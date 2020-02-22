@@ -4,14 +4,14 @@ import urllib.request
 from tqdm import tqdm
 
 
-def read_names(path="pkm_list"):
+def read_names(path=os.path.join("..","pkm_list")):
     with open(path, encoding='utf-8') as f:
         lines = f.readlines()
 
     names = [str(l.replace(":", "-").replace("\t", "").replace("\n", "").replace(",", "").replace("\"", "")) for l in lines]
     return names
 
-def scrape_pokewiki_images(out_path="pokemon"):
+def scrape_pokewiki_images(out_path=os.path.join("..","pokemon")):
     if not os.path.isdir(out_path):
         os.makedirs(out_path)
 

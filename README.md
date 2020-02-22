@@ -28,3 +28,7 @@ pip install numpy
 conda install opencv
 pip install opencv
 ```
+* pypokedex
+```
+pip install pypokedex
+```
