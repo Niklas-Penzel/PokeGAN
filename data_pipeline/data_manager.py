@@ -14,6 +14,8 @@ class data_manager:
 
     only works with pokemon up to dex number 807 until pypokedex is updated.
     simply remove the if statement in the __init__ function if it gets updated!
+
+    this data pipeline is intended for tensorflow + keras
     """
     def __init__(self, path=os.path.join("..", "clean_pkm")):
         """
@@ -27,6 +29,8 @@ class data_manager:
         self.pkm = []
 
         for f_name in tqdm(os.listdir(path)):
+            if os.path.isdir(os.path.join(path, f_name)):
+                continue
             dex_number = int(f_name.split(".")[0].split("_")[0].split("-")[0])
 
             # remove this in the case of a pypokedex update
@@ -34,11 +38,18 @@ class data_manager:
                 self.images.append(cv2.cvtColor(cv2.imread(os.path.join(path, f_name)), cv2.COLOR_BGR2RGB))
                 self.pkm.append(dex.get(dex=dex_number))
 
+    def shuffle(self):
+        z = list(zip(self.images, self.pkm))
+        random.shuffle(z)
+        self.images, self.pkm = zip(*z)
+
+
 
 
 
 if __name__ == "__main__":
     data = data_manager()
+    data.shuffle()
 
     imgs = data.images[0:20]
     lbls = [p.name for p in data.pkm[0:20]]
