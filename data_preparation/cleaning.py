@@ -5,7 +5,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 
-def clean_data(in_path=os.path.join("..","dirty_pkm"), out_path=os.path.join("..","clean_pkm")):
+def clean_data(in_path=os.path.join("..","dirty_pkm"), out_path=os.path.join("..","clean_pkm"), keep_rgba=False):
     if not os.path.isdir(in_path):
         print("WRONG PATH!")
         return 
@@ -17,31 +17,34 @@ def clean_data(in_path=os.path.join("..","dirty_pkm"), out_path=os.path.join("..
 
     rescale_shape = (64, 64)
 
+    num_c = 4 if keep_rgba else 3
+    back_col = 0 if keep_rgba else 0
+
     for f_name in tqdm(files):
         img = cv2.imread(os.path.join(in_path, f_name), cv2.IMREAD_UNCHANGED)
 
         height = img.shape[0]
         width = img.shape[1]
 
-        # convert fro sRGB to RGB
-        tmp = np.full((height, width, 3), 255, dtype=np.uint8)
+        # convert background from rgba to rgb or set background black for rgba
+        tmp = np.full((height, width, num_c), back_col, dtype=np.uint8)
 
         idx = img[:,:,3] == 255
         for i in range(height):
             for j in range(width):
                 if idx[i,j]:
-                    tmp[i,j,:] = img[i,j,0:3]
+                    tmp[i,j,:] = img[i,j,0:num_c]
         img = tmp
 
         if width > height:
-            tmp = np.full((width, width, 3), 255, dtype=np.uint8)
+            tmp = np.full((width, width, num_c), back_col, dtype=np.uint8)
 
             idx = int(width/2) - int(height/2)
             tmp[idx:idx+height,] = img 
 
             img = tmp
         elif height > width:
-            tmp = np.full((height, height, 3), 255, dtype=np.uint8)
+            tmp = np.full((height, height, num_c), back_col, dtype=np.uint8)
 
             idx = int(height/2) - int(width/2)
             tmp[:,idx:idx+width] = img 
@@ -57,4 +60,4 @@ def clean_data(in_path=os.path.join("..","dirty_pkm"), out_path=os.path.join("..
 
 
 if __name__ == "__main__":
-    clean_data()
+    clean_data(keep_rgba=True)

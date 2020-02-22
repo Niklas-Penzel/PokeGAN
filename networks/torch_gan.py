@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from IPython.display import HTML
 import os
+from PIL import Image
 
 """
 Hyper-Parameters
@@ -40,7 +41,7 @@ batch_size = 128
 #   size using a transformer.
 image_size = 64
 # Number of channels in the training images. For color images this is 3
-nc = 3
+nc = 4
 # Size of z latent vector (i.e. size of generator input)
 nz = 100
 # Size of feature maps in generator
@@ -48,7 +49,7 @@ ngf = 64
 # Size of feature maps in discriminator
 ndf = 64
 # Number of training epochs
-num_epochs = 10
+num_epochs = 15
 # Learning rate for optimizers
 lr = 0.0002
 # Beta1 hyperparam for Adam optimizers
@@ -66,6 +67,13 @@ def weights_init(m):
         nn.init.normal_(m.weight.data, 1.0, 0.02)
         nn.init.constant_(m.bias.data, 0)
 
+
+
+# rgba loader
+def pil_loader(path):
+    with open(path, 'rb') as f:
+        img = Image.open(f)
+        return img.convert('RGBA')
 
 # Generator Code
 
@@ -135,11 +143,12 @@ def train_torch_gan():
     # Create the dataset
     dataset = dset.ImageFolder(root=dataroot,
                             transform=transforms.Compose([
-                                transforms.Resize(image_size),
-                                transforms.CenterCrop(image_size),
+                                transforms.RandomHorizontalFlip(),
+                                transforms.RandomAffine(5, translate=(0.05, 0.05), scale=None, shear=2, resample=False, fillcolor=(0,0,0,0)),
                                 transforms.ToTensor(),
-                                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-                            ]))
+                                transforms.Normalize((0.5, 0.5, 0.5, 0.5), (0.5, 0.5, 0.5, 0.5)),
+                            ]),
+                            loader=pil_loader)
     # Create the dataloader
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
                                             shuffle=True, num_workers=workers)
@@ -153,7 +162,7 @@ def train_torch_gan():
     plt.axis("off")
     plt.title("Training Images")
     plt.imshow(np.transpose(vutils.make_grid(real_batch[0].to(device)[:64], padding=2, normalize=True).cpu(),(1,2,0)))
-    #plt.show()
+    plt.show()
 
 
     # Create the generator
@@ -274,7 +283,7 @@ def train_torch_gan():
             D_losses.append(errD.item())
 
             # Check how the generator is doing by saving G's output on fixed_noise
-            if (iters % 500 == 0) or ((epoch == num_epochs-1) and (i == len(dataloader)-1)):
+            if (iters % 100 == 0) or ((epoch == num_epochs-1) and (i == len(dataloader)-1)):
                 with torch.no_grad():
                     fake = netG(fixed_noise).detach().cpu()
                 img_list.append(vutils.make_grid(fake, padding=2, normalize=True))
