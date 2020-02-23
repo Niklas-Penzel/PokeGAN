@@ -46,7 +46,7 @@ image_size = 64
 # Number of channels in the training images. For color images this is 3
 nc = 3
 # Size of z latent vector (i.e. size of generator input)
-nz = 100
+nz = 128
 # Size of feature maps in generator
 ngf = 64
 # Size of feature maps in discriminator
@@ -100,6 +100,7 @@ class View(nn.Module):
         return input.view(shape)
 
 
+
 class PrintLayer(nn.Module):
     def __init__(self):
         super(PrintLayer, self).__init__()
@@ -122,9 +123,9 @@ class Generator(nn.Module):
             #nn.ConvTranspose2d( nz, ngf * 8, 4, 1, 0, bias=False),
             #nn.Upsample(scale_factor=8, mode='nearest'),
             #PrintLayer(),
-            #nn.ReflectionPad2d(1),
-            nn.Conv2d(nz, ngf*8*4*4, 1, 1, padding=0, bias=True),
-            View( (ngf*8, 4, 4) ),
+            View( (int(nz/4/4), 4, 4) ),
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(int(nz/4/4), ngf*8, 3, 1, padding=0, bias=False),
             # nn.Upsample()
             #PrintLayer(),
             nn.BatchNorm2d(ngf * 8),
@@ -174,28 +175,44 @@ class Discriminator(nn.Module):
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
             #PrintLayer(),
-            nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
+            nn.ReflectionPad2d(1),
+            nn.utils.spectral_norm(nn.Conv2d(nc, ndf, 4, 2, 0, bias=False)),
             #PrintLayer(),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Dropout2d(0.25),
+            nn.ReflectionPad2d(1),
+            nn.utils.spectral_norm(nn.Conv2d(ndf, ndf, 3, 1, 0, bias=False)),
+            nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf) x 32 x 32
-            nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
+            nn.ReflectionPad2d(1),
+            nn.utils.spectral_norm(nn.Conv2d(ndf, ndf * 2, 4, 2, 0, bias=False)),
             #PrintLayer(),
-            nn.BatchNorm2d(ndf * 2),
+            #nn.BatchNorm2d(ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Dropout2d(0.25),
+            nn.ReflectionPad2d(1),
+            nn.utils.spectral_norm(nn.Conv2d(ndf*2, ndf*2, 3, 1, 0, bias=False)),
+            nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*2) x 16 x 16
-            nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
+            nn.ReflectionPad2d(1),
+            nn.utils.spectral_norm(nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 0, bias=False)),
             #PrintLayer(),
-            nn.BatchNorm2d(ndf * 4),
+            #nn.BatchNorm2d(ndf * 4),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Dropout2d(0.25),
+            nn.ReflectionPad2d(1),
+            nn.utils.spectral_norm(nn.Conv2d(ndf*4, ndf*4, 3, 1, 0, bias=False)),
+            nn.LeakyReLU(0.2, inplace=True),
+            #nn.Dropout2d(0.25),
             # state size. (ndf*4) x 8 x 8
-            nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
+            nn.ReflectionPad2d(1),
+            nn.utils.spectral_norm(nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 0, bias=False)),
             #PrintLayer(),
-            nn.BatchNorm2d(ndf * 8),
+            #nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Dropout2d(0.1),
+            nn.ReflectionPad2d(1),
+            nn.utils.spectral_norm(nn.Conv2d(ndf*8, ndf*8, 3, 1, 0, bias=False)),
+            nn.LeakyReLU(0.2, inplace=True),
+            #nn.Dropout2d(0.1),
             # state size. (ndf*8) x 4 x 4
             nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
             #PrintLayer(),
@@ -306,7 +323,9 @@ def train_torch_gan():
             # Format batch
             real_cpu = data[0].to(device)
             b_size = real_cpu.size(0)
-            label = torch.full((b_size,), real_label, device=device) * label_smooth
+
+            label = (label_smooth - 1.0) * torch.rand((b_size,), device=device) + 1.0
+            #label = torch.full((b_size,), real_label, device=device) * label_smooth
             # Forward pass real batch through D
             output = netD(real_cpu).view(-1)
             # Calculate loss on all-real batch
