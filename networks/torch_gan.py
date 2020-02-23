@@ -105,32 +105,37 @@ class Generator(nn.Module):
             #nn.ConvTranspose2d( nz, ngf * 8, 4, 1, 0, bias=False),
             nn.Conv2d(nz, ngf*8, 1, 1, bias=False),
             nn.Upsample(scale_factor=4, mode='bilinear'),
-            nn.Conv2d(ngf*8, ngf*8, 3, 1, padding=(1,1)),
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(ngf*8, ngf*8, 3, 1, padding=0),
             # nn.Upsample()
             nn.BatchNorm2d(ngf * 8),
             nn.ReLU(True),
             # state size. (ngf*8) x 4 x 4
             #nn.ConvTranspose2d(ngf * 8, ngf * 4, 4, 2, 1, bias=False),
             nn.Upsample(scale_factor=2, mode='bilinear'),
-            nn.Conv2d(ngf*8, ngf*4, 3, 1, padding=(1,1)),
+            nn.ReflectionPad2d(1),
+            nn.Conv2d(ngf*8, ngf*4, 3, 1, padding=0),
             nn.BatchNorm2d(ngf * 4),
             nn.ReLU(True),
             # state size. (ngf*4) x 8 x 8
             #nn.ConvTranspose2d( ngf * 4, ngf * 2, 4, 2, 1, bias=False),
             nn.Upsample(scale_factor=2, mode='bilinear'),
-            nn.Conv2d( ngf * 4, ngf * 2, 3, 1, padding=(1,1)),
+            nn.ReflectionPad2d(1),
+            nn.Conv2d( ngf * 4, ngf * 2, 3, 1, padding=0),
             nn.BatchNorm2d(ngf * 2),
             nn.ReLU(True),
             # state size. (ngf*2) x 16 x 16
             #nn.ConvTranspose2d( ngf * 2, ngf, 4, 2, 1, bias=False),
             nn.Upsample(scale_factor=2, mode='bilinear'),
-            nn.Conv2d( ngf * 2, ngf, 3, 1, padding=(1,1)),
+            nn.ReflectionPad2d(1),
+            nn.Conv2d( ngf * 2, ngf, 3, 1, padding=0),
             nn.BatchNorm2d(ngf),
             nn.ReLU(True),
             # state size. (ngf) x 32 x 32
             #nn.ConvTranspose2d( ngf, nc, 4, 2, 1, bias=False),
             nn.Upsample(scale_factor=2, mode='bilinear'),
-            nn.Conv2d( ngf, nc, 3, 1, padding=(1,1)),
+            nn.ReflectionPad2d(1),
+            nn.Conv2d( ngf, nc, 3, 1, padding=0),
             nn.Tanh()
             # state size. (nc) x 64 x 64
         )
