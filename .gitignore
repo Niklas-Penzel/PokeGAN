@@ -130,6 +130,8 @@ dmypy.json
 
 pokemon/
 sprites/
-*.png
-*.jpg
-*.jpeg
+dirty_pkm/
+clean_pkm/
+clean_pkm_rgba/
+output.txt
+error.txt

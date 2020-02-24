@@ -22,7 +22,7 @@ from IPython.display import HTML
 import os
 from PIL import Image
 from datetime import datetime
-from tqdm import tqdm
+#from tqdm import tqdm
 
 """
 Hyper-Parameters
@@ -52,7 +52,7 @@ ngf = 64
 # Size of feature maps in discriminator
 ndf = 64
 # Number of training epochs
-num_epochs = 30
+num_epochs = 300
 # Learning rate for optimizers
 lr = 0.0002
 # Beta1 hyperparam for Adam optimizers
@@ -179,20 +179,20 @@ class Discriminator(nn.Module):
             nn.utils.spectral_norm(nn.Conv2d(nc, ndf, 4, 2, 0, bias=False)),
             #PrintLayer(),
             nn.LeakyReLU(0.2, inplace=True),
-            #nn.Dropout2d(0.25),
-            #nn.ReflectionPad2d(1),
-            #nn.utils.spectral_norm(nn.Conv2d(ndf, ndf, 3, 1, 0, bias=False)),
-            #nn.LeakyReLU(0.2, inplace=True),
+            nn.Dropout2d(0.25),
+            nn.ReflectionPad2d(1),
+            nn.utils.spectral_norm(nn.Conv2d(ndf, ndf, 3, 1, 0, bias=False)),
+            nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf) x 32 x 32
             nn.ReflectionPad2d(1),
             nn.utils.spectral_norm(nn.Conv2d(ndf, ndf * 2, 4, 2, 0, bias=False)),
             #PrintLayer(),
             #nn.BatchNorm2d(ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
-            #nn.Dropout2d(0.25),
-            #nn.ReflectionPad2d(1),
-            #nn.utils.spectral_norm(nn.Conv2d(ndf*2, ndf*2, 3, 1, 0, bias=False)),
-            #nn.LeakyReLU(0.2, inplace=True),
+            nn.Dropout2d(0.25),
+            nn.ReflectionPad2d(1),
+            nn.utils.spectral_norm(nn.Conv2d(ndf*2, ndf*2, 3, 1, 0, bias=False)),
+            nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*2) x 16 x 16
             nn.ReflectionPad2d(1),
             nn.utils.spectral_norm(nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 0, bias=False)),
@@ -243,12 +243,12 @@ def train_torch_gan():
     device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
 
     # Plot some training images
-    real_batch = next(iter(dataloader))
+    """real_batch = next(iter(dataloader))
     plt.figure(figsize=(8,8))
     plt.axis("off")
     plt.title("Training Images")
     plt.imshow(np.transpose(vutils.make_grid(real_batch[0].to(device)[:64], padding=2, normalize=True).cpu(),(1,2,0)))
-    plt.show()
+    plt.show()"""
 
 
     # Create the generator
@@ -369,7 +369,7 @@ def train_torch_gan():
             optimizerG.step()
 
             # Output training stats
-            if i % 25 == 0:
+            if i % 50 == 0:
                 print('[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f'
                     % (epoch, num_epochs, i, len(dataloader),
                         errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
@@ -379,32 +379,32 @@ def train_torch_gan():
             D_losses.append(errD.item())
 
             # Check how the generator is doing by saving G's output on fixed_noise
-            if (iters % 100 == 0) or ((epoch == num_epochs-1) and (i == len(dataloader)-1)):
+            if (iters % 500 == 0) or ((epoch == num_epochs-1) and (i == len(dataloader)-1)):
                 with torch.no_grad():
                     fake = netG(fixed_noise).detach().cpu()
-                img_list.append(vutils.make_grid(fake, padding=2, normalize=True))
+                #img_list.append(vutils.make_grid(fake, padding=2, normalize=True))
                 vutils.save_image(fake, os.path.join(progress_path, f"{progress:03d}.png"))
                 progress += 1
 
             iters += 1
 
 
-    plt.figure(figsize=(10,5))
+    """plt.figure(figsize=(10,5))
     plt.title("Generator and Discriminator Loss During Training")
     plt.plot(G_losses,label="G")
     plt.plot(D_losses,label="D")
     plt.xlabel("iterations")
     plt.ylabel("Loss")
     plt.legend()
-    plt.show()
+    plt.show()"""
 
     #%%capture
-    fig = plt.figure(figsize=(8,8))
+    """fig = plt.figure(figsize=(8,8))
     plt.axis("off")
     ims = [[plt.imshow(np.transpose(i,(1,2,0)), animated=True)] for i in img_list]
     ani = animation.ArtistAnimation(fig, ims, interval=1000, repeat_delay=1000, blit=True)
 
-    HTML(ani.to_jshtml())
+    HTML(ani.to_jshtml())"""
 
     # Grab a batch of real images from the dataloader
     real_batch = next(iter(dataloader))
@@ -421,8 +421,8 @@ def train_torch_gan():
     plt.axis("off")
     plt.title("Fake Images")
     plt.imshow(np.transpose(img_list[-1],(1,2,0)))
-    plt.show()
-
+    #plt.show()
+    plt.savefig(os.path.join("..", "results", f"{d}.png"))
 
 if __name__ == "__main__":
     train_torch_gan()
